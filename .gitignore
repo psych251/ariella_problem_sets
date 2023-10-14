@@ -3,3 +3,7 @@
 # Quarto outputs
 *_files/
 *.html
+
+#R things
+.Rhistory
+rsconnect/
