@@ -12,7 +12,7 @@ For this exercise, please try to reproduce the results from Study 1 of the assoc
 
 #### Methods summary: 
 
-In study 1, 150 introductory psychology students were randomly assigned to a "real" or a "hypothetical" condition. In the real condition, participants believed that they would have a real opportuniy to connect with potential romantic partners. In the hypothetical condition, participants simply imagined that they are on a date. All participants were required to select their favorite profile and answer whether they were willing to exchange contact information. 
+In study 1, 150 introductory psychology students were randomly assigned to a "real" or a "hypothetical" condition. In the real condition, participants believed that they would have a real opportunity to connect with potential romantic partners. In the hypothetical condition, participants simply imagined that they are on a date. All participants were required to select their favorite profile and answer whether they were willing to exchange contact information. 
 
 ------
 
@@ -51,7 +51,9 @@ d <- read_sav('data/Empathy Gap Study 1 data.sav')
 # Step 3: Tidy data
 
 ```{r}
+d <- d[122:125]
 
+d$exchangeinfo = ifelse(d$exchangeinfo == 1, 1, 0)
 ```
 
 # Step 4: Run analysis
@@ -61,8 +63,23 @@ d <- read_sav('data/Empathy Gap Study 1 data.sav')
 > Only 10 of the 61 participants in the hypothetical condition chose to exchange contact information with the unattractive potential date (16%). In contrast, 26 of the 71 participants in the real condition chose to exchange contact information (37%).
 
 ```{r}
-# reproduce the above results here
 
+num_hyp = sum(d$condition == 0)
+
+hyp_contact = sum(d$exchangeinfo*(d$condition ==0))
+
+hyp_percent = hyp_contact / num_hyp
+
+num_real = sum(d$condition == 1)
+
+real_contact = sum(d$exchangeinfo*(d$condition == 1))
+  
+real_percent = real_contact / num_real
+
+print(paste0("Hypothetical condition: ", hyp_percent))
+
+print(paste0("Real condition: ", real_percent))
+  
 ```
 
 ## Inferential statistics
@@ -72,7 +89,8 @@ d <- read_sav('data/Empathy Gap Study 1 data.sav')
 Hint: if you are using the function chisq.test(), make sure to set the continuity correction to false ("correct = FALSE") since sample size is greater than 20. 
 
 ```{r}
-# reproduce the above results here
+
+chisq.test(d$condition, d$exchangeinfo, correct = FALSE)
 
 ```
 
@@ -80,14 +98,14 @@ Hint: if you are using the function chisq.test(), make sure to set the continuit
 
 Were you able to reproduce the results you attempted to reproduce? If not, what part(s) were you unable to reproduce?
 
-> ANSWER HERE
+Yes, it was pretty straightforward!
 
 How difficult was it to reproduce your results? 
 
-> ANSWER HERE
+Not very. 
 
 What aspects made it difficult? What aspects made it easy?
 
-> ANSWER HERE
+I had to remind myself what a Chi-squared test was! Other than that, I'd say it was pretty straightforward because the tests used were quite easy and intuitive.
 
 

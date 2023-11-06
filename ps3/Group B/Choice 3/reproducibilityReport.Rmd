@@ -42,7 +42,7 @@ library(readxl) # import excel files
 # library(afex) # anova functions
 # library(ez) # anova functions 2
 # library(scales) # for plotting
-# std.err <- function(x) sd(x)/sqrt(length(x)) # standard error
+std.err <- function(x) sd(x)/sqrt(length(x)) # standard error
 ```
 
 # Step 2: Load data
@@ -55,8 +55,8 @@ d <- read_excel(data_path, sheet=3)
 
 # Step 3: Tidy data
 
-```{r}
-
+```{r, message = F}
+colnames(d)[5] = "Agreement"
 ```
 
 # Step 4: Run analysis
@@ -73,6 +73,15 @@ Try to recreate Figure 2 (fig2.png, also included in the same folder as this Rmd
 
 ```{r}
 
+stat_summary(aes(x=group))
+
+means_d <- d %>%
+  group_by(group, subscale) %>%
+  summarize(Agreement = mean(Agreement), .groups = "keep") %>%
+  mutate(SEM = std.err(d$Agreement))
+
+ggplot(means_d, aes(x = group, fill = subscale, y = Agreement)) + geom_col(position = "dodge") + scale_x_discrete(labels=c('Moroccans', 'Spaniards')) + geom_errorbar(aes(ymin = Agreement - SEM, ymax = Agreement + SEM), position="dodge") + coord_cartesian(ylim=c(2, 4))
+
 ```
 
 ## Inferential statistics
@@ -80,21 +89,24 @@ Try to recreate Figure 2 (fig2.png, also included in the same folder as this Rmd
 > According to a mixed analysis of variance (ANOVA) with group (Spanish vs. Moroccan) as a between-subjects factor and temporal focus (past vs. future) as a within-subjects factor, temporal focus differed significantly between Spaniards and Moroccans, as indicated by a significant interaction of temporal focus and group, F(1, 78) = 19.12, p = .001, ηp2 = .20 (Fig. 2).
 
 ```{r}
-# reproduce the above results here
+
+# mixed_anova <- anova_test(data = d, dv = Agreement, wid = participant, between = group, within = subscale)
+
+#summary(mixed_anova)
 
 ```
 
 > Moroccans showed greater agreement with past-focused statements than Spaniards did, t(78) = 4.04, p = .001, 
 
 ```{r}
-# reproduce the above results here
+# :(
 
 ```
 
 > and Spaniards showed greater agreement with future-focused statements than Moroccans did, t(78) = −3.32, p = .001.(de la Fuente et al., 2014, p. 1685)
 
 ```{r}
-# reproduce the above results here
+# :(
 
 ```
 
@@ -102,12 +114,12 @@ Try to recreate Figure 2 (fig2.png, also included in the same folder as this Rmd
 
 Were you able to reproduce the results you attempted to reproduce? If not, what part(s) were you unable to reproduce?
 
-> ANSWER HERE
+I spent 3 hours and couldn't figure out how to run a mixed anova given the structure of the data :(
 
 How difficult was it to reproduce your results? 
 
-> ANSWER HERE
+Quite.
 
 What aspects made it difficult? What aspects made it easy?
 
-> ANSWER HERE
+It took me a really long time to figure out ggplot, which was pretty frustrating but not inherently hard. Similarly, I struggled with the format of the data for running an anova.
