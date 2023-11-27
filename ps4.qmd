@@ -18,26 +18,34 @@ This part is a warmup, it should be relatively straightforward `ggplot2` practic
 Load data from Frank, Vul, Saxe (2011, Infancy), a study in which we measured infants' looking to hands in moving scenes. There were infants from 3 months all the way to about two years, and there were two movie conditions (`Faces_Medium`, in which kids played on a white background, and `Faces_Plus`, in which the backgrounds were more complex and the people in the videos were both kids and adults). An eye-tracker measured children's attention to faces. This version of the dataset only gives two conditions and only shows the amount of looking at hands (other variables were measured as well). 
 
 ```{r}
-fvs <- read_csv("data/FVS2011-hands.csv")
+fvs <- read.csv("data/FVS2011-hands.csv")
 ```
 
 First, use `ggplot` to plot a histogram of the ages of children in the study. NOTE: this is a repeated measures design, so you can't just take a histogram of every measurement. 
 
-```{r}
+```{r}  
+unique_fvs <- fvs[match(unique(fvs$subid), fvs$subid),]
+
+hist(unique_fvs$age)
 ```
 
 Second, make a scatter plot showing hand looking as a function of age and condition. Add appropriate smoothing lines. Take the time to fix the axis labels and make the plot look nice.
 
+```{r, message=F,warning=F}
+library(ggplot2)
+```
+
 ```{r}
+ggplot(fvs, aes(x=age, y=hand.look)) + geom_point() + facet_wrap(~condition) + xlab("Age") + ylab("Hand Looking") + geom_smooth(method = 'lm')
 ```
 
 What do you conclude from this pattern of data?
 
-> ANSWER HERE
+>Perhaps there was a significant positive correlation between age and hand looking in the faces_plus condition, but not in the faces_medium condition.
 
 What statistical analyses would you perform here to quantify these differences?
 
-> ANSWER HERE
+>Perhaps a t-test between linear regression models of each of the conditions.
 
 
 # Part 2: Simulation
@@ -55,16 +63,30 @@ What's the proportion of "significant" results ($p < .05$) that you see?
 First do this using a `for` loop.
 
 ```{r}
+
+count = 0
+for (i in 1:10000) {
+  if (t.test(rnorm(30))$p.value < .05) {
+    count = count + 1
+  }
+}
+
+forloop_proportion = count / 10000
+
 ```
 
 Next, do this using the `replicate` function:
 
 ```{r}
+
+d <- replicate(n = 10000, t.test(rnorm(30))$p.value)
+
+replicate_proportion = length(which(d < 0.05)) / 10000
 ```
 
 How does this compare to the intended false-positive rate of $\alpha=0.05$?
 
-> ANSWER
+> About the same!
 
 Ok, that was a bit boring. Let's try something more interesting - let's implement a p-value sniffing simulation, in the style of Simons, Nelson, & Simonsohn (2011).
 
@@ -73,18 +95,37 @@ Consider this scenario: you have done an experiment, again with 30 participants 
 First, write a function that implements this sampling regime.
 
 ```{r}
-double.sample <- function() {
+double.sample <- function(x) {
+  count = 0
+  data = rnorm(30)
+  pval = t.test(data)$p.value
+  while (pval > 0.05) {
+    if (pval > x) {
+      break
+    }
+    data = c(data, rnorm(30))
+    pval = t.test(data)$p.value
+  }
+  if (pval < 0.05) {
+    count = 1
+  }
+  return (count)
 }
 ```
 
 Now call this function 10k times and find out what happens. 
 
 ```{r}
+sigsum <- sum(replicate(n = 10000,double.sample(0.25)))
+
+hacked_proportion <- sigsum/10000
+
+hacked_proportion
 ```
 
 Is there an inflation of false positives? How bad is it?
 
-> ANSWER
+> There is - false positives occur between 8 and 9 percent of the time now, rather than 5 percent.
 
 Now modify this code so that you can investigate this "double the sample" rule in a bit more depth. In the previous question, the researcher doubles the sample only when they think they got "close" to a significant result, i.e. when their not-significant p is less than 0.25. What if the researcher was more optimistic? See what happens in these 3 other scenarios:
 
@@ -99,8 +140,29 @@ HINT: Try to do this by making the function `double.sample` take the upper p val
 HINT 2: You may need more samples. Find out by looking at how the results change from run to run.
 
 ```{r}
+
+sigsum_0.5 <- sum(replicate(n = 10000,double.sample(0.5)))
+
+proportion_0.5 <- sigsum_0.5/10000
+
+proportion_0.5
+
+sigsum_0.75 <- sum(replicate(n = 10000,double.sample(0.75)))
+
+proportion_0.75 <- sigsum_0.75/10000
+
+proportion_0.75
+
+# This is my code for doubling the sample whenever there is a non-significant p-value. Because doubling the sample does not guarantee a significant p value, this code often runs for a very long time (potentially forever), thus I have commented it out. 
+
+##sigsum_1 <- sum(replicate(n = 10,double.sample(1)))
+
+##proportion_1 <- sigsum_1/10
+
+##proportion_1
+
 ```
 
 What do you conclude on the basis of this simulation? How bad is this kind of data-dependent policy?
 
-> ANSWER
+> It's pretty bad; the proportion of significant p-values increases from 5% to ~13% with the less than 0.5 criteria, and 18% with the less than 0.75 criteria.
